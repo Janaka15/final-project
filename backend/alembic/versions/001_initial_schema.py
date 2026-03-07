@@ -7,6 +7,7 @@ Create Date: 2026-01-01 00:00:00.000000
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 
 revision: str = "001"
 down_revision: Union[str, None] = None
@@ -16,11 +17,24 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Enums
-    op.execute("CREATE TYPE user_role AS ENUM ('ADMIN', 'CUSTOMER')")
-    op.execute("CREATE TYPE room_status AS ENUM ('AVAILABLE', 'MAINTENANCE')")
-    op.execute(
-        "CREATE TYPE booking_status AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED')"
-    )
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE user_role AS ENUM ('ADMIN', 'CUSTOMER');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE room_status AS ENUM ('AVAILABLE', 'MAINTENANCE');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE booking_status AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$
+    """)
 
     op.create_table(
         "users",
@@ -30,7 +44,7 @@ def upgrade() -> None:
         sa.Column("password_hash", sa.String(255), nullable=False),
         sa.Column(
             "role",
-            sa.Enum("ADMIN", "CUSTOMER", name="user_role", create_type=False),
+            PgEnum("ADMIN", "CUSTOMER", name="user_role", create_type=False),
             nullable=False,
             server_default="CUSTOMER",
         ),
@@ -71,7 +85,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "status",
-            sa.Enum("AVAILABLE", "MAINTENANCE", name="room_status", create_type=False),
+            PgEnum("AVAILABLE", "MAINTENANCE", name="room_status", create_type=False),
             nullable=False,
             server_default="AVAILABLE",
         ),
@@ -103,11 +117,8 @@ def upgrade() -> None:
         sa.Column("total_price", sa.Numeric(12, 2)),
         sa.Column(
             "status",
-            sa.Enum(
-                "PENDING", "CONFIRMED", "CANCELLED", "COMPLETED",
-                name="booking_status",
-                create_type=False,
-            ),
+            PgEnum("PENDING", "CONFIRMED", "CANCELLED", "COMPLETED",
+                   name="booking_status", create_type=False),
             nullable=False,
             server_default="CONFIRMED",
         ),

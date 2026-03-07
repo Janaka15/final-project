@@ -39,8 +39,14 @@ def _load_model():
             f"best_model.pkl not found at {model_path}. Run notebook 08 to export it."
         )
 
-    import joblib
-    _model = joblib.load(model_path)
+    json_path = MODELS_DIR / "best_model_prophet.json"
+    if winner == "prophet" and json_path.exists():
+        from prophet.serialize import model_from_json
+        with open(json_path) as f:
+            _model = model_from_json(f.read())
+    else:
+        import joblib
+        _model = joblib.load(model_path)
 
 
 def predict_occupancy(start_date: date, days: int = 30) -> List[dict]:
@@ -65,9 +71,9 @@ def predict_occupancy(start_date: date, days: int = 30) -> List[dict]:
 def _predict_prophet(start_date: date, days: int) -> List[dict]:
     import pandas as pd
 
-    future_dates = [start_date + timedelta(days=i) for i in range(days)]
-    future_df = _model.make_future_dataframe(periods=days, freq="D")
-    # Keep only the forecast portion
+    last_train_date = _model.history_dates.max().date()
+    periods_needed = (start_date - last_train_date).days + days
+    future_df = _model.make_future_dataframe(periods=max(periods_needed, days), freq="D")
     future_df = future_df[future_df["ds"] >= pd.Timestamp(start_date)]
 
     forecast = _model.predict(future_df)

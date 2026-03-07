@@ -20,7 +20,7 @@ from datetime import date
 import csv
 from decimal import Decimal
 
-from app.core.database import SessionLocal, engine
+from app.core.database import get_session_local, get_engine
 from app.core.security import hash_password
 from app.models import User, RoomType, Room, OccupancyHistory
 from app.models.user import UserRole
@@ -153,7 +153,7 @@ def seed_occupancy(db):
 
 def main():
     print("Running seed script...")
-    db = SessionLocal()
+    db = get_session_local()()
     try:
         seed_admin(db)
         seed_room_types(db)
