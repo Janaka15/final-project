@@ -63,7 +63,7 @@ def get_dashboard_kpis(
 
 @router.get("/revenue", response_model=List[RevenueTrendPoint])
 def revenue_trend(
-    period: str = Query("weekly", regex="^(daily|weekly|monthly)$"),
+    period: str = Query("weekly", pattern="^(daily|weekly|monthly)$"),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):

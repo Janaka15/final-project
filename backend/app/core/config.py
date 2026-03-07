@@ -1,10 +1,11 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import ConfigDict
 from typing import List
-import json
 
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", extra="ignore")
+
     DATABASE_URL: str = "postgresql://somerset:somerset_pass@localhost:5432/somerset_hotel"
     SECRET_KEY: str = "change-this-to-a-random-secret-key-at-least-32-chars"
     JWT_ALGORITHM: str = "HS256"
@@ -22,10 +23,6 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> List[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
 
 
 settings = Settings()

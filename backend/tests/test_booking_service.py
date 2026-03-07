@@ -16,6 +16,8 @@ from app.services.booking_service import (
 )
 from app.core.security import hash_password
 
+_booking_counter = 0
+
 
 # ---------- Fixtures ----------
 
@@ -49,6 +51,8 @@ def customer(db):
 
 
 def make_booking(db, user_id, room_type_id, check_in, check_out, status=BookingStatus.CONFIRMED):
+    global _booking_counter
+    _booking_counter += 1
     b = Booking(
         user_id=user_id,
         room_type_id=room_type_id,
@@ -57,7 +61,7 @@ def make_booking(db, user_id, room_type_id, check_in, check_out, status=BookingS
         guests=1,
         total_price=Decimal("25000.00"),
         status=status,
-        confirmation_code=f"TEST{check_in}{check_out}".replace("-", "")[:12],
+        confirmation_code=f"TST{_booking_counter:09d}",
     )
     db.add(b)
     db.commit()
