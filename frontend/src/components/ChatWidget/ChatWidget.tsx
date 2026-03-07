@@ -16,20 +16,19 @@ import { MessageCircle } from "lucide-react";
 
 const AGENT_ID = import.meta.env.VITE_DIALOGFLOW_AGENT_ID as string | undefined;
 
-declare global {
+declare module "react/jsx-runtime" {
   namespace JSX {
     interface IntrinsicElements {
-      "df-messenger": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          "project-id"?: string;
-          "agent-id"?: string;
-          "language-code"?: string;
-          "chat-title"?: string;
-          "chat-icon"?: string;
-          "expand"?: string;
-        },
-        HTMLElement
-      >;
+      "df-messenger": {
+        "project-id"?: string;
+        "agent-id"?: string;
+        "language-code"?: string;
+        "chat-title"?: string;
+        "chat-icon"?: string;
+        expand?: string;
+        className?: string;
+        id?: string;
+      };
     }
   }
 }

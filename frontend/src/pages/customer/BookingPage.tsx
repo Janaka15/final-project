@@ -1,5 +1,5 @@
-import { useState, useEffect, FormEvent } from "react";
-import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, type FormEvent } from "react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

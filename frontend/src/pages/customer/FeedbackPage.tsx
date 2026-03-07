@@ -1,5 +1,5 @@
-import { useState, FormEvent } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, type FormEvent } from "react";
+import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,6 @@ const STARS = [1, 2, 3, 4, 5];
 
 export default function FeedbackPage() {
   const { bookingId } = useParams();
-  const navigate = useNavigate();
 
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);

@@ -3,8 +3,6 @@ import AdminSidebar from "@/components/AdminSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { adminApi } from "@/services/api";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -129,7 +127,7 @@ export default function AdminPredictions() {
                         tick={{ fontSize: 11 }}
                       />
                       <Tooltip
-                        formatter={(val: number, name: string) => [
+                        formatter={(val, name) => [
                           `${val}%`,
                           name === "occupancy"
                             ? "Predicted"

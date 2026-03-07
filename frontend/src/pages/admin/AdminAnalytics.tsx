@@ -107,7 +107,7 @@ export default function AdminAnalytics() {
                         tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                         tick={{ fontSize: 11 }}
                       />
-                      <Tooltip formatter={(v: number) => formatLKR(v)} />
+                      <Tooltip formatter={(v) => formatLKR(v as number)} />
                       <Line
                         type="monotone"
                         dataKey="revenue"
@@ -192,7 +192,7 @@ export default function AdminAnalytics() {
                           tick={{ fontSize: 11 }}
                         />
                         <Tooltip
-                          formatter={(v: number) => [`${(v * 100).toFixed(1)}%`, "Avg Occupancy"]}
+                          formatter={(v) => [`${((v as number) * 100).toFixed(1)}%`, "Avg Occupancy"]}
                         />
                         <Bar
                           dataKey="avg_occupancy_rate"
