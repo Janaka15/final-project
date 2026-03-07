@@ -19,6 +19,7 @@ frontend/dist/
 frontend/.env
 frontend/.env.local
 data/splits/
+!backend/app/models
 # ML artifacts (large — track metadata.json only, not pkl files)
 models/best_model.pkl
 models/arima_model.pkl
