@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import ChatWidget from "@/components/ChatWidget/ChatWidget";
 
 const HIGHLIGHTS = [
   {
@@ -172,6 +173,8 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
+      <ChatWidget />
+
       <footer className="bg-slate-900 text-slate-400 py-10 px-4 text-center text-sm">
         <p className="font-medium text-white mb-2">Somerset Mirissa Beach Hotel</p>
         <p>Mirissa, Southern Province, Sri Lanka</p>
