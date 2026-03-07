@@ -1,4 +1,5 @@
 # System Architecture
+
 ## Somerset Mirissa Beach Hotel — IHMS
 
 **Version:** 1.0 | **Date:** 2026-03-07
@@ -63,6 +64,7 @@ frontend/src/
 ```
 
 **Key decisions:**
+
 - JWT stored in `localStorage` (acceptable for demo; production would use httpOnly cookies)
 - Axios interceptor attaches `Authorization: Bearer <token>` on every request
 - 401 response → auto-redirect to `/login`
@@ -178,13 +180,15 @@ feedback        (id, booking_id→bookings, user_id→users, rating, comment, cr
 
 ## 5. Security Architecture
 
-| Layer | Control |
-|-------|---------|
-| Passwords | bcrypt (passlib, work factor 12) |
-| Auth tokens | HS256 JWT, 7-day expiry, signed with SECRET_KEY |
+| Layer             | Control                                                 |
+| ----------------- | ------------------------------------------------------- |
+| Passwords         | bcrypt (passlib, work factor 12)                        |
+| Auth tokens       | HS256 JWT, 7-day expiry, signed with SECRET_KEY         |
 | Role-based access | `require_admin` dependency on all `/api/admin/*` routes |
-| CORS | Whitelist via `CORS_ORIGINS` env var |
-| Input validation | Pydantic v2 on all request bodies |
+| CORS              | Whitelist via `CORS_ORIGINS` env var                    |
+| Input validation  | Pydantic v2 on all request bodies                       |
+| SQL injection     | SQLAlchemy ORM (parameterised queries)                  |
+| XSS               | React DOM escaping (default)                           all request bodies |
 | SQL injection | SQLAlchemy ORM (parameterised queries) |
 | XSS | React DOM escaping (default) |
 
