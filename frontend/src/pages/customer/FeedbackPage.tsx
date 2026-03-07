@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { feedbackApi } from "@/services/api";
+import { Check, Star } from "lucide-react";
 
 const STARS = [1, 2, 3, 4, 5];
 
@@ -47,7 +48,7 @@ export default function FeedbackPage() {
         <Navbar />
         <div className="max-w-md mx-auto px-4 py-20 text-center">
           <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">✓</span>
+            <Check className="w-8 h-8 text-emerald-600" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Thank you!</h2>
           <p className="text-slate-500 mb-6">Your feedback helps us improve.</p>
@@ -88,9 +89,13 @@ export default function FeedbackPage() {
                       onClick={() => setRating(star)}
                       onMouseEnter={() => setHovered(star)}
                       onMouseLeave={() => setHovered(0)}
-                      className="text-3xl transition-transform hover:scale-110"
+                      className="transition-transform hover:scale-110"
                     >
-                      {star <= (hovered || rating) ? "★" : "☆"}
+                      <Star
+                        className="w-8 h-8"
+                        fill={star <= (hovered || rating) ? "#f59e0b" : "none"}
+                        stroke={star <= (hovered || rating) ? "#f59e0b" : "#94a3b8"}
+                      />
                     </button>
                   ))}
                 </div>

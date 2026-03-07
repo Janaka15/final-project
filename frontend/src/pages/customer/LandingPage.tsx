@@ -3,25 +3,26 @@ import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ChatWidget from "@/components/ChatWidget/ChatWidget";
+import { Waves, Palmtree, Fish, Utensils, type LucideIcon } from "lucide-react";
 
-const HIGHLIGHTS = [
+const HIGHLIGHTS: { icon: LucideIcon; title: string; desc: string }[] = [
   {
-    icon: "🌊",
+    icon: Waves,
     title: "Beachfront Location",
     desc: "Steps from Mirissa beach, one of Sri Lanka's most beautiful coastlines.",
   },
   {
-    icon: "🌴",
+    icon: Palmtree,
     title: "15 Boutique Rooms",
     desc: "Standard, Deluxe, and Suite categories — all with ocean breezes.",
   },
   {
-    icon: "🐋",
+    icon: Fish,
     title: "Whale Watching Hub",
     desc: "Mirissa is the #1 whale watching spot in Sri Lanka. We arrange tours.",
   },
   {
-    icon: "🍛",
+    icon: Utensils,
     title: "Sri Lankan Cuisine",
     desc: "Authentic local breakfast and dinner served with sea views.",
   },
@@ -104,7 +105,9 @@ export default function LandingPage() {
           {HIGHLIGHTS.map((h) => (
             <Card key={h.title} className="text-center p-2">
               <CardContent className="pt-6">
-                <div className="text-4xl mb-4">{h.icon}</div>
+                <div className="flex justify-center mb-4">
+                  <h.icon className="w-10 h-10 text-[#0ea5e9]" />
+                </div>
                 <h3 className="font-semibold text-slate-900 mb-2">{h.title}</h3>
                 <p className="text-sm text-slate-500">{h.desc}</p>
               </CardContent>
@@ -172,7 +175,6 @@ export default function LandingPage() {
         </Button>
       </section>
 
-      {/* Footer */}
       <ChatWidget />
 
       <footer className="bg-slate-900 text-slate-400 py-10 px-4 text-center text-sm">

@@ -1,14 +1,23 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
+  Sparkles,
+  TrendingUp,
+  ClipboardList,
+  Bed,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
-const NAV_ITEMS = [
-  { to: "/admin", label: "Dashboard", icon: "📊", end: true },
-  { to: "/admin/predictions", label: "Predictions", icon: "🔮" },
-  { to: "/admin/analytics", label: "Analytics", icon: "📈" },
-  { to: "/admin/bookings", label: "Bookings", icon: "📋" },
-  { to: "/admin/rooms", label: "Rooms", icon: "🛏️" },
-  { to: "/admin/customers", label: "Customers", icon: "👥" },
+const NAV_ITEMS: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/predictions", label: "Predictions", icon: Sparkles },
+  { to: "/admin/analytics", label: "Analytics", icon: TrendingUp },
+  { to: "/admin/bookings", label: "Bookings", icon: ClipboardList },
+  { to: "/admin/rooms", label: "Rooms", icon: Bed },
+  { to: "/admin/customers", label: "Customers", icon: Users },
 ];
 
 export default function AdminSidebar() {
@@ -43,7 +52,7 @@ export default function AdminSidebar() {
               )
             }
           >
-            <span>{item.icon}</span>
+            <item.icon className="w-4 h-4 shrink-0" />
             {item.label}
           </NavLink>
         ))}

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { adminApi } from "@/services/api";
 import { formatLKR, formatDate } from "@/lib/utils";
+import { Star } from "lucide-react";
 
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -240,9 +241,15 @@ export default function AdminCustomers() {
                             <td className="py-3 px-4 font-medium">{f.user_name}</td>
                             <td className="py-3 px-4 text-slate-600">{f.room_type_name}</td>
                             <td className="py-3 px-4">
-                              <span className="text-amber-500">
-                                {"★".repeat(f.rating)}
-                                {"☆".repeat(5 - f.rating)}
+                              <span className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className="w-3.5 h-3.5"
+                                    fill={s <= f.rating ? "#f59e0b" : "none"}
+                                    stroke={s <= f.rating ? "#f59e0b" : "#94a3b8"}
+                                  />
+                                ))}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-slate-600 max-w-xs">

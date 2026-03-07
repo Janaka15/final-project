@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { roomsApi } from "@/services/api";
 import { formatLKR } from "@/lib/utils";
+import { Users, Check } from "lucide-react";
 
 const ROOM_IMAGES: Record<string, string[]> = {
   Standard: [
@@ -116,7 +117,7 @@ export default function RoomDetailPage() {
             <p className="text-slate-600 mb-5">{room.description}</p>
 
             <div className="flex items-center gap-2 mb-5 text-sm text-slate-600">
-              <span>👥</span>
+              <Users className="w-4 h-4 text-slate-400" />
               <span>Up to <strong>{room.capacity}</strong> guests</span>
             </div>
 
@@ -125,7 +126,7 @@ export default function RoomDetailPage() {
               <div className="grid grid-cols-1 gap-2">
                 {(room.amenities || []).map((a: string) => (
                   <div key={a} className="flex items-center gap-2 text-sm text-slate-600">
-                    <span className="text-emerald-500">✓</span>
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                     {a}
                   </div>
                 ))}

@@ -12,6 +12,7 @@
  */
 
 import { useEffect } from "react";
+import { MessageCircle } from "lucide-react";
 
 const AGENT_ID = import.meta.env.VITE_DIALOGFLOW_AGENT_ID as string | undefined;
 
@@ -69,7 +70,7 @@ export default function ChatWidget() {
             )
           }
         >
-          💬
+          <MessageCircle className="w-6 h-6" />
         </button>
       </div>
     );

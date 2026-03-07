@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { bookingsApi } from "@/services/api";
 import { formatLKR, formatDate } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 export default function ConfirmationPage() {
   const { bookingId } = useParams();
@@ -54,7 +55,7 @@ export default function ConfirmationPage() {
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         {/* Success icon */}
         <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-4xl">✓</span>
+          <Check className="w-10 h-10 text-emerald-600" />
         </div>
 
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Booking Confirmed!</h1>
