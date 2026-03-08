@@ -46,7 +46,8 @@ def _load_model():
             _model = model_from_json(f.read())
     else:
         import joblib
-        _model = joblib.load(model_path)
+        loaded = joblib.load(model_path)
+        _model = loaded["model"] if isinstance(loaded, dict) and "model" in loaded else loaded
 
 
 def predict_occupancy(start_date: date, days: int = 30) -> List[dict]:
