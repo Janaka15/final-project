@@ -68,7 +68,7 @@ This starts PostgreSQL on port 5432 and pgAdmin on port 5050 (admin@admin.com / 
 ```bash
 cd backend
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+.venv\Scripts\activate
 pip install -r requirements.txt
 
 cp ../.env.example .env          # edit SECRET_KEY at minimum
