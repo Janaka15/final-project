@@ -29,25 +29,33 @@ def get_dashboard_kpis(
 ):
     today = date.today()
 
-    # Today's occupancy from occupancy_history
-    today_record = db.query(OccupancyHistory).filter(OccupancyHistory.date == today).first()
-    todays_occupancy = today_record.occupancy_rate if today_record else 0.0
+    # Total rooms from room_types table (live data)
+    total_rooms = db.query(func.sum(RoomType.total_rooms)).scalar() or 15
 
-    # Revenue month-to-date from occupancy_history
+    # Today's occupancy from live bookings
+    checked_in_today = db.query(func.count(Booking.id)).filter(
+        Booking.status == BookingStatus.CONFIRMED,
+        Booking.check_in <= today,
+        Booking.check_out > today,
+    ).scalar() or 0
+    todays_occupancy = checked_in_today / total_rooms
+
+    # Revenue MTD from live bookings
     first_of_month = today.replace(day=1)
-    revenue_mtd_row = db.query(func.sum(OccupancyHistory.revenue)).filter(
-        OccupancyHistory.date >= first_of_month,
-        OccupancyHistory.date <= today,
+    revenue_mtd_row = db.query(func.sum(Booking.total_price)).filter(
+        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]),
+        Booking.check_in >= first_of_month,
+        Booking.check_in <= today,
     ).scalar()
     revenue_mtd = float(revenue_mtd_row or 0)
 
-    # Active bookings (CONFIRMED + PENDING with future check_out)
+    # Active bookings (unchanged)
     active_bookings = db.query(func.count(Booking.id)).filter(
         Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.PENDING]),
         Booking.check_out >= today,
     ).scalar() or 0
 
-    # Check-ins today
+    # Check-ins today (unchanged)
     checkins_today = db.query(func.count(Booking.id)).filter(
         Booking.check_in == today,
         Booking.status == BookingStatus.CONFIRMED,

@@ -11,16 +11,20 @@ import os
 from datetime import date, timedelta
 from pathlib import Path
 from typing import List, Optional
+import pandas as pd
 
 _model = None
 _metadata: Optional[dict] = None
+_last_loaded_date: Optional[date] = None
 
 MODELS_DIR = Path(__file__).resolve().parents[3] / "models"
 
 
 def _load_model():
-    global _model, _metadata
-    if _model is not None:
+    global _model, _metadata, _last_loaded_date
+
+    # Reload model once per day
+    if _model is not None and _last_loaded_date == date.today():
         return
 
     metadata_path = MODELS_DIR / "model_metadata.json"
@@ -32,7 +36,7 @@ def _load_model():
     with open(metadata_path) as f:
         _metadata = json.load(f)
 
-    winner = _metadata.get("winner", "prophet").lower()
+    winner = _metadata.get("winner", "sarima").lower()
     model_path = MODELS_DIR / "best_model.pkl"
     if not model_path.exists():
         raise FileNotFoundError(
@@ -46,7 +50,10 @@ def _load_model():
             _model = model_from_json(f.read())
     else:
         import joblib
-        _model = joblib.load(model_path)
+        loaded = joblib.load(model_path)
+        _model = loaded["model"] if isinstance(loaded, dict) and "model" in loaded else loaded
+
+    _last_loaded_date = date.today()
 
 
 def predict_occupancy(start_date: date, days: int = 30) -> List[dict]:
@@ -58,7 +65,7 @@ def predict_occupancy(start_date: date, days: int = 30) -> List[dict]:
     """
     _load_model()
 
-    winner = (_metadata or {}).get("winner", "prophet").lower()
+    winner = (_metadata or {}).get("winner", "sarima").lower()
 
     if winner == "prophet":
         return _predict_prophet(start_date, days)
@@ -69,37 +76,54 @@ def predict_occupancy(start_date: date, days: int = 30) -> List[dict]:
 
 
 def _predict_prophet(start_date: date, days: int) -> List[dict]:
-    import pandas as pd
-
     last_train_date = _model.history_dates.max().date()
-    periods_needed = (start_date - last_train_date).days + days
-    future_df = _model.make_future_dataframe(periods=max(periods_needed, days), freq="D")
-    future_df = future_df[future_df["ds"] >= pd.Timestamp(start_date)]
+
+    gap = (start_date - last_train_date).days
+    periods_needed = gap + days
+
+    future_df = _model.make_future_dataframe(periods=periods_needed, freq="D")
+
+    start_ts = pd.Timestamp(start_date)
+    end_ts = pd.Timestamp(start_date + timedelta(days=days))
+    future_df = future_df[
+        (future_df["ds"] >= start_ts) & (future_df["ds"] < end_ts)
+    ]
 
     forecast = _model.predict(future_df)
+
     result = []
     for _, row in forecast.iterrows():
-        result.append(
-            {
-                "date": row["ds"].date(),
-                "predicted_occupancy": float(min(max(row["yhat"], 0), 1)),
-                "lower": float(min(max(row.get("yhat_lower", row["yhat"]), 0), 1)),
-                "upper": float(min(max(row.get("yhat_upper", row["yhat"]), 0), 1)),
-            }
-        )
+        result.append({
+            "date": row["ds"].date(),
+            "predicted_occupancy": float(min(max(row["yhat"], 0), 1)),
+            "lower": float(min(max(row.get("yhat_lower", row["yhat"]), 0), 1)),
+            "upper": float(min(max(row.get("yhat_upper", row["yhat"]), 0), 1)),
+        })
     return result[:days]
 
 
 def _predict_statsmodels(start_date: date, days: int) -> List[dict]:
-    forecast = _model.forecast(steps=days)
+    # Last date the model knows about (end of test set)
+    last_known_date = pd.to_datetime(
+        _metadata.get("evaluated_on", "2025-12-31")
+    ).date()
+
+    # How many steps from last known date to start_date (today)
+    gap = (start_date - last_known_date).days  # ~80 days as of March 2026
+
+    # Forecast enough steps to bridge the gap + cover requested days
+    total_steps = gap + days
+    all_forecasts = _model.forecast(steps=total_steps)
+
+    # Skip the gap, take only the days from start_date onwards
+    relevant = all_forecasts[gap:]
+
     result = []
-    for i, val in enumerate(forecast):
-        result.append(
-            {
-                "date": start_date + timedelta(days=i),
-                "predicted_occupancy": float(min(max(val, 0), 1)),
-                "lower": None,
-                "upper": None,
-            }
-        )
-    return result
+    for i, val in enumerate(relevant[:days]):
+        result.append({
+            "date": start_date + timedelta(days=i),
+            "predicted_occupancy": float(min(max(val, 0), 1)),
+            "lower": None,
+            "upper": None,
+        })
+    return result[:days]

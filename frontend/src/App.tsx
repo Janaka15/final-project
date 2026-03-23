@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ChatWidget from "@/components/ChatWidget/ChatWidget";
 
 // Customer pages
 import LandingPage from "@/pages/customer/LandingPage";
@@ -117,6 +118,7 @@ export default function App() {
             }
           />
         </Routes>
+        <ChatWidget /> 
       </BrowserRouter>
     </AuthProvider>
   );
