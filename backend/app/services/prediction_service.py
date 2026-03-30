@@ -17,7 +17,10 @@ _model = None
 _metadata: Optional[dict] = None
 _last_loaded_date: Optional[date] = None
 
-MODELS_DIR = Path(__file__).resolve().parents[3] / "models"
+BASE_DIR = Path(__file__).resolve().parents[2]
+MODELS_DIR = BASE_DIR / "models"
+if not MODELS_DIR.exists():
+    MODELS_DIR = Path(__file__).resolve().parents[3] / "models"
 
 
 def _load_model():
