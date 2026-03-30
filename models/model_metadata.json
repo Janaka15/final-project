@@ -1,0 +1,24 @@
+{
+  "winner": "sarima",
+  "test_rmse": 0.0944,
+  "test_mae": 0,
+  "all_models": {
+    "arima": {
+      "rmse": 0.1018,
+      "mae": 0.0793,
+      "mape": 15.75
+    },
+    "sarima": {
+      "rmse": 0.0944,
+      "mae": 0.0736,
+      "mape": 14.65
+    },
+    "prophet": {
+      "rmse": 0.103,
+      "mae": 0.0825,
+      "mape": 14.81
+    }
+  },
+  "trained_on": "2024-12-31",
+  "evaluated_on": "2025-12-31"
+}
