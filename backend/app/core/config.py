@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = "admin@somersetmirissa.com"
     ADMIN_PASSWORD: str = "Admin@2024!"
     ADMIN_NAME: str = "Hotel Admin"
+    
+    SMTP_EMAIL: str = ""
+    SMTP_PASSWORD: str = ""
 
     @property
     def cors_origins_list(self) -> List[str]:

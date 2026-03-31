@@ -7,6 +7,9 @@ from sqlalchemy import and_, func
 from app.models.booking import Booking, BookingStatus, generate_confirmation_code
 from app.models.room import RoomType
 from app.schemas.booking import BookingCreate
+from app.services.email_service import send_booking_confirmation, send_booking_cancellation
+from app.models.user import User
+
 
 
 def count_overlapping_bookings(
@@ -80,6 +83,24 @@ def create_booking(db: Session, user_id: int, data: BookingCreate) -> Booking:
     db.add(booking)
     db.commit()
     db.refresh(booking)
+
+    # Send confirmation email
+    user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        send_booking_confirmation(
+            to_email=user.email,
+            name=user.name,
+            booking={
+                "confirmation_code": booking.confirmation_code,
+                "room_type": room_type.name,
+                "check_in": str(booking.check_in),
+                "check_out": str(booking.check_out),
+                "guests": booking.guests,
+                "total_price": float(booking.total_price),
+            }
+        )
+
+
     return booking
 
 
@@ -96,4 +117,18 @@ def cancel_booking(db: Session, booking_id: int, user_id: int) -> Booking:
     booking.status = BookingStatus.CANCELLED
     db.commit()
     db.refresh(booking)
+    # Send cancellation email
+    user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        send_booking_cancellation(
+            to_email=user.email,
+            name=user.name,
+            booking={
+                "confirmation_code": booking.confirmation_code,
+                "check_in": str(booking.check_in),
+                "check_out": str(booking.check_out),
+            }
+        )
+
+
     return booking
