@@ -33,13 +33,29 @@ def get_predictions(
         metadata = json.load(f)
 
     try:
-        forecasts = predict_occupancy(start_date=date.today(), days=days)
+        forecasts, model_stale, warning = predict_occupancy(
+            start_date=date.today(), days=days
+        )
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        # Raised by _predict_statsmodels when the forecast call itself fails
+        # (e.g. numerical instability that slipped past the staleness guard).
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Forecast unavailable: {e} "
+                "Please retrain the model with recent data."
+            ),
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {e}")
 
-    avg = sum(f["predicted_occupancy"] for f in forecasts) / len(forecasts) if forecasts else 0.0
+    avg = (
+        sum(f["predicted_occupancy"] for f in forecasts) / len(forecasts)
+        if forecasts
+        else 0.0
+    )
 
     return ForecastResponse(
         model_name=metadata.get("winner", "unknown"),
@@ -53,4 +69,6 @@ def get_predictions(
             for f in forecasts
         ],
         avg_predicted_occupancy=avg,
+        model_stale=model_stale,
+        warning=warning,
     )

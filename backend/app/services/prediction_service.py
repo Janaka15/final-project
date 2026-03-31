@@ -7,11 +7,19 @@ at startup (lazy singleton) and exposes predict_occupancy().
 """
 
 import json
+import logging
 import os
 from datetime import date, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import pandas as pd
+
+logger = logging.getLogger(__name__)
+
+# If the gap between the model's last known date and today exceeds this
+# threshold, the SARIMA forecast becomes numerically unstable.  We return a
+# clearly-labelled fallback instead of crashing.
+STALE_MODEL_DAYS_THRESHOLD = 60
 
 _model = None
 _metadata: Optional[dict] = None
@@ -59,19 +67,26 @@ def _load_model():
     _last_loaded_date = date.today()
 
 
-def predict_occupancy(start_date: date, days: int = 30) -> List[dict]:
+def predict_occupancy(
+    start_date: date, days: int = 30
+) -> Tuple[List[dict], bool, Optional[str]]:
     """
-    Return a list of day-level occupancy forecasts.
+    Return ``(forecasts, model_stale, warning)``.
 
-    Each element: {"date": date, "predicted_occupancy": float,
-                   "lower": float|None, "upper": float|None}
+    * ``forecasts``   – list of day-level dicts with keys
+                        ``date``, ``predicted_occupancy``, ``lower``, ``upper``.
+    * ``model_stale`` – ``True`` when the model is too old to produce reliable
+                        forecasts (gap > STALE_MODEL_DAYS_THRESHOLD days).
+    * ``warning``     – human-readable explanation when ``model_stale`` is True,
+                        otherwise ``None``.
     """
     _load_model()
 
     winner = (_metadata or {}).get("winner", "sarima").lower()
 
     if winner == "prophet":
-        return _predict_prophet(start_date, days)
+        forecasts = _predict_prophet(start_date, days)
+        return forecasts, False, None
     elif winner in ("arima", "sarima"):
         return _predict_statsmodels(start_date, days)
     else:
@@ -105,20 +120,106 @@ def _predict_prophet(start_date: date, days: int) -> List[dict]:
     return result[:days]
 
 
-def _predict_statsmodels(start_date: date, days: int) -> List[dict]:
-    # Last date the model knows about (end of test set)
+def _predict_statsmodels(
+    start_date: date, days: int
+) -> Tuple[List[dict], bool, Optional[str]]:
+    """
+    Forecast occupancy using the fitted SARIMA/ARIMA model.
+
+    Returns ``(forecasts, model_stale, warning)``.
+
+    When the gap between the model's last known date and *start_date* exceeds
+    ``STALE_MODEL_DAYS_THRESHOLD`` days the model is considered stale.
+    Attempting to forecast 60+ steps ahead with SARIMA causes numerical
+    instability (exploding confidence intervals, NaN/Inf values), so we skip
+    the live forecast entirely and return a constant fallback equal to the
+    model's last observed occupancy level.  The caller receives ``model_stale=True``
+    and a ``warning`` string so the API can surface this to clients.
+    """
+    # Last date the model knows about (end of test set / evaluation window)
     last_known_date = pd.to_datetime(
         _metadata.get("evaluated_on", "2025-12-31")
     ).date()
 
-    # How many steps from last known date to start_date (today)
-    gap = (start_date - last_known_date).days  # ~80 days as of March 2026
+    # How many calendar days separate the model's horizon from today
+    gap = (start_date - last_known_date).days
 
-    # Forecast enough steps to bridge the gap + cover requested days
+    evaluated_on_str = _metadata.get("evaluated_on", "unknown")
+
+    # ------------------------------------------------------------------
+    # Staleness guard
+    # ------------------------------------------------------------------
+    if gap > STALE_MODEL_DAYS_THRESHOLD:
+        logger.warning(
+            "SARIMA model is stale: last known date=%s, start_date=%s, gap=%d days "
+            "(threshold=%d). Returning fallback forecast. Retrain the model to restore "
+            "accurate predictions.",
+            evaluated_on_str,
+            start_date,
+            gap,
+            STALE_MODEL_DAYS_THRESHOLD,
+        )
+
+        warning_msg = (
+            f"Model is stale: it was last evaluated on {evaluated_on_str} "
+            f"({gap} days ago, threshold is {STALE_MODEL_DAYS_THRESHOLD} days). "
+            "Forecasting this far ahead with SARIMA causes numerical instability. "
+            "The values below are a constant fallback — please retrain the model "
+            "with recent data for reliable predictions."
+        )
+
+        # Use the last in-sample fitted value as a neutral fallback so the
+        # response is still a valid, parseable forecast rather than an error.
+        try:
+            fallback_value = float(
+                min(max(_model.fittedvalues.iloc[-1], 0), 1)
+            )
+        except Exception:
+            fallback_value = 0.5  # safe default if fitted values unavailable
+
+        fallback = [
+            {
+                "date": start_date + timedelta(days=i),
+                "predicted_occupancy": fallback_value,
+                "lower": None,
+                "upper": None,
+            }
+            for i in range(days)
+        ]
+        return fallback, True, warning_msg
+
+    # ------------------------------------------------------------------
+    # Normal forecast path (gap is within the safe window)
+    # ------------------------------------------------------------------
     total_steps = gap + days
-    all_forecasts = _model.forecast(steps=total_steps)
+    logger.debug(
+        "SARIMA forecast: last_known_date=%s, gap=%d, total_steps=%d",
+        evaluated_on_str,
+        gap,
+        total_steps,
+    )
 
-    # Skip the gap, take only the days from start_date onwards
+    try:
+        all_forecasts = _model.forecast(steps=total_steps)
+    except Exception as exc:
+        # Catch any numerical errors (LinAlgError, overflow, etc.) that slip
+        # through the staleness guard and return a graceful degraded response
+        # rather than a 500/503 crash.
+        logger.error(
+            "SARIMA forecast failed (gap=%d days, total_steps=%d): %s",
+            gap,
+            total_steps,
+            exc,
+            exc_info=True,
+        )
+        raise RuntimeError(
+            f"SARIMA forecast failed after {gap}-day gap ({total_steps} total steps). "
+            f"Original error: {exc}. "
+            "The model may need retraining — run notebooks/07_model_evaluation.ipynb "
+            "and notebooks/08_inference_pipeline.ipynb to produce a fresh artifact."
+        ) from exc
+
+    # Skip the bridging gap, keep only the requested forecast window
     relevant = all_forecasts[gap:]
 
     result = []
@@ -129,4 +230,4 @@ def _predict_statsmodels(start_date: date, days: int) -> List[dict]:
             "lower": None,
             "upper": None,
         })
-    return result[:days]
+    return result[:days], False, None
